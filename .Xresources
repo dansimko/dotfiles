@@ -1,6 +1,0 @@
-urxvt.boldFont:
-urxvt.scrollBar: false
-
-urxvt.depth: 32
-urxvt.foreground: rgba:cfcf/cfcf/cfcf/ffff
-urxvt.background: rgba:0000/0000/0000/cfcf
