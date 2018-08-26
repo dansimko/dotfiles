@@ -1,0 +1,4 @@
+#!/bin/bash
+
+/usr/bin/wrmsr 0x150 0x80000011f2e00000
+/usr/bin/wrmsr 0x150 0x80000211f2e00000

@@ -1,0 +1,11 @@
+[Unit]
+Description=Intel Undervolt Service
+After=sleep.target suspend.target hibernate.target hybrid-sleep.target
+#Requires=systemd-modules-load.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/undervolt/bin/undervolt
+
+[Install]
+WantedBy=multi-user.target
