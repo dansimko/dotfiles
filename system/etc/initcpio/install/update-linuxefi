@@ -1,0 +1,11 @@
+#!/bin/bash
+
+build() {
+	/usr/local/sbin/update-linuxefi &
+}
+
+help() {
+	cat << HELPEOF
+This hooks updates linux.efi
+HELPEOF
+}
