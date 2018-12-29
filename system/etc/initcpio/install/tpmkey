@@ -1,0 +1,10 @@
+#!/bin/bash
+
+build() {
+	for mod in tpm tpm_crb tpm_tis_core tpm_tis; do
+		add_module "$mod"
+	done
+	add_binary "tpm2_unseal"
+	add_binary "/usr/lib/libtss2-tcti-device.so"
+	add_runscript
+}

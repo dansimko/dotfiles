@@ -1,0 +1,7 @@
+#!/usr/bin/ash
+
+run_hook() {
+	touch /tmp/cryptlvm.keyfile
+	chmod 000 /tmp/cryptlvm.keyfile
+	tpm2_unseal -H 0x81000000 -L sha1:0,1,2,3,4,5,6,7 -o /tmp/cryptlvm.keyfile
+}
