@@ -6,6 +6,6 @@ build() {
 
 help() {
 	cat << HELPEOF
-This hooks updates linux.efi
+This hook updates linuxx64.efi
 HELPEOF
 }
