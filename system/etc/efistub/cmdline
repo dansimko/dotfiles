@@ -1,1 +1,0 @@
-BOOT_IMAGE=/vmlinuz-linux rw quiet cryptdevice=UUID=00000000-0000-0000-0000-000000000000:cryptlvm:allow-discards cryptkey=rootfs:/tmp/cryptlvm.keyfile root=UUID=00000000-0000-0000-0000-000000000000 resume=UUID=00000000-0000-0000-0000-000000000000

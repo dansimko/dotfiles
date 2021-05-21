@@ -1,3 +1,0 @@
-# disable turbo on battery
-SUBSYSTEM=="power_supply", ATTR{online}=="0", RUN+="/usr/bin/sh -c 'echo -n 1 > /sys/devices/system/cpu/intel_pstate/no_turbo'"
-SUBSYSTEM=="power_supply", ATTR{online}=="1", RUN+="/usr/bin/sh -c 'echo -n 0 > /sys/devices/system/cpu/intel_pstate/no_turbo'"

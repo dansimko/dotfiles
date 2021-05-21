@@ -11,4 +11,6 @@ if [ -f ~/.Xresources ]; then
 	xrdb -merge ~/.Xresources
 fi
 
+[[ -f ~/.Xmodmap ]] && xmodmap ~/.Xmodmap
+
 exec i3

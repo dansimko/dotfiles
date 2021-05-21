@@ -1,3 +1,0 @@
-#SUBSYSTEM=="module", ACTION=="add", KERNEL=="acpi_cpufreq", RUN+="/bin/sh -c 'echo -n balance_power | tee /sys/devices/system/cpu/cpufreq/policy?/energy_performance_preference'"
-SUBSYSTEM=="power_supply", ATTR{online}=="0", RUN+="/bin/sh -c 'echo -n balance_power | tee /sys/devices/system/cpu/cpufreq/policy?/energy_performance_preference'"
-SUBSYSTEM=="power_supply", ATTR{online}=="1", RUN+="/bin/sh -c 'echo -n balance_performance | tee /sys/devices/system/cpu/cpufreq/policy?/energy_performance_preference'"
