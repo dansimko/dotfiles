@@ -1,0 +1,12 @@
+#!/bin/sh
+
+export TERMINAL="foot"
+
+export QT_QPA_PLATFORM=wayland
+export GDK_BACKEND=wayland
+#export CLUTTER_BACKEND=wayland
+export XDG_CURRENT_DESKTOP=sway
+
+export MOZ_ENABLE_WAYLAND=1
+
+sway "$@"

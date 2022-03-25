@@ -1,0 +1,96 @@
+[theme]
+name = "space-villain"
+#name = "native"
+
+[icons]
+name = "awesome5"
+[icons.overrides]
+memory_mem = "\uf538"
+cpu = "\uf2db"
+
+[[block]]
+block = "music"
+
+[[block]]
+block = "bluetooth"
+mac = "70:26:05:3C:0E:5C"
+#format = "WH-1000XM2 {percentage}"
+format = "{percentage}"
+hide_disconnected = true
+[block.icons_overrides]
+bluetooth = "\uf025"
+
+[[block]]
+block = "bluetooth"
+mac = "DC:2C:26:F2:81:85"
+#format = "Keychron K6 {percentage}"
+format = "{percentage}"
+hide_disconnected = true
+
+[[block]]
+block = "net"
+#device = "wlp1s0"
+format = "{ssid} ({signal_strength:3})"
+format_alt = "{ip}"
+hide_inactive = true
+
+#[[block]]
+#block = "net"
+#device = "enp*"
+#format = "{ssid} ({signal_strength:3})"
+#format = "{ip}"
+
+[[block]]
+block = "disk_space"
+format = "{icon}{available}"
+
+[[block]]
+block = "memory"
+#display_type = "memory"
+#format_mem = "{mem_used_percents}"
+#format_swap = "{swap_used_percents}"
+
+#[[block]]
+#block = "cpu"
+#interval = 1
+
+[[block]]
+block = "load"
+interval = 1
+format = "{1m}"
+critical = 4.8
+[block.icons_overrides]
+cogs = "\uf2db"
+
+[[block]]
+block = "battery"
+#if_command = "test -e /sys/class/power_supply/BAT1"
+format = "{percentage} {time}"
+full_format = "{percentage}"
+
+[[block]]
+block = "backlight"
+
+#[[block]]
+#block = "hueshift"
+#hue_shifter = "gammastep"
+
+[[block]]
+block = "sound"
+
+[[block]]
+block = "sound"
+device_kind = "source"
+
+[[block]]
+block = "keyboard_layout"
+driver = "sway"
+format = " \uf1ab {layout}"
+[block.mappings]
+"English (US)" = "EN"
+"Slovak (QWERTY)" = "SK"
+
+[[block]]
+block = "time"
+interval = 1
+format = "%a %d/%m %T"
