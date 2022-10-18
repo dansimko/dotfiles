@@ -100,5 +100,11 @@ if has('gui_running')
   map! <S-Insert> <MiddleMouse>
 endif
 
-colorscheme desert
+colorscheme habamax
 "syntax on
+
+set number
+set cursorline
+
+set grepprg=grep\ -nH\ $*
+let g:tex_flavor = "latex"
