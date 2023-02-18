@@ -22,6 +22,22 @@ bluetooth = "\uf025"
 
 [[block]]
 block = "bluetooth"
+mac = "33:01:00:00:00:BA"
+#format = "TRN BT20S Pro {percentage}"
+format = "{percentage}"
+hide_disconnected = true
+[block.icons_overrides]
+bluetooth = "\uf025"
+
+[[block]]
+block = "bluetooth"
+mac = "FD:9B:1B:F3:C4:04"
+#format = "Mouse {percentage}"
+format = "{percentage}"
+hide_disconnected = true
+
+[[block]]
+block = "bluetooth"
 mac = "DC:2C:26:F2:81:85"
 #format = "Keychron K6 {percentage}"
 format = "{percentage}"
