@@ -24,7 +24,7 @@ set $term foot
 # Your preferred application launcher
 # Note: pass the final command to swaymsg so that the resulting window can be opened
 # on the original workspace that the command was run on.
-set $bemenu bemenu -p '' -H 23
+set $bemenu bemenu -p ''
 set $menu i3-dmenu-desktop --dmenu="$bemenu -i"
 set $menu_all dmenu_path | $bemenu | xargs swaymsg exec --
 
@@ -207,7 +207,13 @@ bar {
     }
 }
 
+#output * bg /home/daniel/pictures/f36-02-night.jpg fill
+
 output eDP-1 scale 1.25
+output "Stargate Technology SG-HDMI  FHD Unknown" {
+    scale 1.5
+    transform 90
+}
 
 #
 # Keyboard layout
@@ -229,18 +235,23 @@ default_floating_border none
 
 include /etc/sway/config.d/*
 
+# toggle screen display
+bindsym --locked $mod+o exec sway output eDP-1 dpms toggle
+
 # lock
 bindsym $mod+z exec $lock
 
 # Use pactl to adjust volume in PulseAudio.
 bindsym --locked XF86AudioRaiseVolume \
-        exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +1024
+        exec --no-startup-id wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 4%+
+bindsym --locked Shift+XF86AudioRaiseVolume \
+        exec --no-startup-id wpctl set-volume @DEFAULT_AUDIO_SINK@ 4%+
 bindsym --locked XF86AudioLowerVolume \
-        exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -1024
+        exec --no-startup-id wpctl set-volume @DEFAULT_AUDIO_SINK@ 4%-
 bindsym --locked XF86AudioMute \
-        exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+        exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
 bindsym --locked XF86AudioMicMute \
-        exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
+        exec --no-startup-id wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
 
 # brightness controls
 bindsym --locked XF86MonBrightnessUp exec brightnessctl s +4%
@@ -250,5 +261,9 @@ bindsym --locked XF86MonBrightnessDown exec brightnessctl s 4%-
 bindsym --locked XF86AudioPlay exec --no-startup-id playerctl play-pause
 bindsym --locked XF86AudioPrev exec --no-startup-id playerctl previous
 bindsym --locked XF86AudioNext exec --no-startup-id playerctl next
+
+# Screenshot
+bindsym $mod+Print exec --no-startup-id grim "$HOME/pictures/screenshot/$(date +%Y%m%d%H%M%S).png"
+bindsym $mod+Shift+Print exec --no-startup-id grim -g "$(slurp)" "$HOME/pictures/screenshot/$(date +%Y%m%d%H%M%S).png"
 
 exec --no-startup-id python /usr/share/sway/scripts/inactive-windows-transparency.py --opacity 0.85
