@@ -4,7 +4,7 @@ SRC_PATH="$(readlink -f "${SRC_DIR:-.}")"
 TARGET_PATH="$(readlink -f "${TARGET_PATH:-..}")"
 
 if [ -z "$APPS" ]; then
-	APPS="$(find $SRC_PATH -maxdepth 1 -type d -not -name ".*" | sed "s|^${SRC_PATH}/\?||")"
+	APPS="$(find "$SRC_PATH" -maxdepth 1 -type d -not -name ".*" | sed "s|^${SRC_PATH}/\?||")"
 fi
 
 src=()

@@ -1,4 +1,4 @@
 return {
     "mfussenegger/nvim-lint",
-    version = "*",  -- no stable realeases
+    version = "*",  -- no stable releases
 }
