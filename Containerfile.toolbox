@@ -3,24 +3,28 @@ FROM registry.fedoraproject.org/fedora-toolbox:$fedora_version as base
 
 ARG opencode_version=1.2.26
 ARG yamlls_version=1.21.0
+ARG ansiblels_version=1.2.3
+ARG harper_version=1.12.0
+ARG helm_ls_version=0.5.4
 
 RUN dnf install --disablerepo=* --assumeyes \
         https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
         https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm \
  && dnf install --allowerasing --assumeyes \
-        iputils bind-utils \
+        iputils bind-utils inotify-tools \
         gcc gdb binutils clang clang-tools-extra \
         golang \
         rust rust-analyzer \
         python3 python3-devel python3.9 python3.9-devel python3.12 python3.12-devel \
         direnv git \
-        opentofu \
+        opentofu kubernetes-client helm \
         ty \
         yamllint \
         codespell \
         stow \
         mesa-va-drivers mesa-vulkan-drivers ffmpeg gstreamer1-plugin-openh264 intel-media-driver libavcodec-freeworld \
         openssh-clients \
+        python3-detect-secrets \
  && dnf --setopt=install_weak_deps=false install --assumeyes \
         podman-remote \
         nvim vim \
@@ -31,7 +35,10 @@ RUN dnf install --disablerepo=* --assumeyes \
         libtree-sitter-yaml  libtree-sitter-toml  libtree-sitter-rust  libtree-sitter-c  libtree-sitter-cpp  \
         libtree-sitter-bash  libtree-sitter-go  libtree-sitter-json  libtree-sitter-lua libtree-sitter-python \
         tree-sitter-cli \
- && npm install -g opencode-ai@$opencode_version yaml-language-server@$yamlls_version \
+        nodejs-bash-language-server ShellCheck \
+        pinentry \
+        ansible ansible-lint \
+ && npm install -g opencode-ai@$opencode_version yaml-language-server@$yamlls_version @ansible/ansible-language-server@$ansiblels_version \
  && opencode completion bash > /etc/bash_completion.d/opencode \
  && dnf clean all \
  && rm -rf /var/cache/dnf \
@@ -39,9 +46,18 @@ RUN dnf install --disablerepo=* --assumeyes \
  && curl -LJq https://github.com/opentofu/tofu-ls/releases/download/v0.4.0/tofu-ls_Linux_x86_64.tar.gz \
     | tar -xzO tofu-ls > /usr/local/bin/tofu-ls \
  && chmod +x /usr/local/bin/tofu-ls \
- && curl -LJq curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-    > /usr/local/bin/kubectl \
- && chmod +x /usr/local/bin/kubectl
+ && curl -LJq https://github.com/Automattic/harper/releases/download/v${harper_version}/harper-cli-x86_64-unknown-linux-gnu.tar.gz \
+    | tar -xzO harper-cli > /usr/local/bin/harper-cli \
+ && chmod +x /usr/local/bin/harper-cli \
+ && curl -LJq https://github.com/Automattic/harper/releases/download/v${harper_version}/harper-ls-x86_64-unknown-linux-gnu.tar.gz \
+    | tar -xzP harper-ls > /usr/local/bin/harper-ls \
+ && chmod +x /usr/local/bin/harper-ls \
+ && curl -LJo /usr/local/bin/helm_ls https://github.com/mrjosh/helm-ls/releases/download/v${helm_ls_version}/helm_ls_linux_amd64 \
+ && chmod +x /usr/local/bin/helm_ls
+
+#  && curl -LJq "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+#     > /usr/local/bin/kubectl \
+#  && chmod +x /usr/local/bin/kubectl
 
 RUN mkdir /etc/opencode && cat <<EOF > /etc/opencode/opencode.json
 {
@@ -70,9 +86,16 @@ RUN mkdir /etc/opencode && cat <<EOF > /etc/opencode/opencode.json
   "model": "litellm/claude-sonnet-4-6",
   "small_model": "litellm/claude-haiku-4-5",
   "lsp": {
+    "bash": {
+      "command": ["bash-language-server", "start"]
+    },
     "gopls": {
       "command": ["gopls", "serve"],
       "extensions": [".go"]
+    },
+    "ruff-lsp": {
+      "command": ["ruff", "server"],
+      "extensions": [".py", ".pyi"]
     },
     "tofu-ls": {
       "command": ["tofu-ls"],
@@ -100,9 +123,7 @@ EOF
 ENV OPENCODE_DISABLE_LSP_DOWNLOAD="true" \
     OPENCODE_EXPERIMENTAL_LSP_TOOL="true" \
     OPENCODE_CONFIG_DIR="/etc/opencode" \
-    OPENCODE_CONFIG="/etc/opencode/opencode.json" \
-    GOOGLE_CLOUD_PROJECT="dummy" \
-    VERTEX_LOCATION="dummy"
+    OPENCODE_CONFIG="/etc/opencode/opencode.json"
 
 #
 # build openshift `oc` binary
@@ -137,7 +158,6 @@ RUN dnf copr enable --assumeyes @teemtee/stable \
         krb5-workstation \
         openbao openbao-vault-compat \
         awscli2 python3-openstackclient oci-cli \
-        ansible \
         tmt \
         testing-farm \
  && python -m pip install --root-user-action ignore poetry==$poetry_version \
@@ -150,6 +170,7 @@ RUN dnf copr enable --assumeyes @teemtee/stable \
 FROM base as personal
 
 RUN dnf install --assumeyes \
+        android-tools \
         pass pass-otp \
         mpv \
         oci-cli \
