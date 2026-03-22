@@ -1,0 +1,33 @@
+profile laptop {
+	output eDP-1 enable position 0,0 scale 1.5
+}
+
+profile home_docked {
+	output eDP-1 disable
+	output "AOC U34V5C WQVP6HA000306" enable mode 3440x1440@59.973Hz position 0,0 scale 1.25
+}
+
+profile home {
+	output eDP-1 enable position 2752,288 scale 1.5
+	output "AOC U34V5C WQVP6HA000306" enable mode 3440x1440@100.000Hz position 0,0 scale 1.25
+}
+
+profile home_laptop {
+	output eDP-1 enable position 0,0 scale 1.5
+	output "AOC U34V5C WQVP6HA000306" disable
+}
+
+profile home_game {
+	output eDP-1 disable
+	output "AOC U34V5C WQVP6HA000306" enable mode 3440x1440@100.000Hz position 0,0 scale 1
+}
+
+profile home_game_fhd_docked {
+	output eDP-1 disable
+	output "AOC U34V5C WQVP6HA000306" enable mode --custom 2560x1080@100.000Hz position 0,0 scale 1
+}
+
+profile home_game_fhd {
+	output eDP-1 enable position 2560,288 scale 1.5
+	output "AOC U34V5C WQVP6HA000306" enable mode --custom 2560x1080@100.000Hz position 0,0 scale 1
+}

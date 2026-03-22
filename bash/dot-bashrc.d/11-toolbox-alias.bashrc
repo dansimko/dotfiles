@@ -1,0 +1,8 @@
+TOOLBOX_WORK_CONTAINER="${TOOLBOX_WORK_CONTAINER:-work-f44}"
+
+alias tbwork="toolbox enter ${TOOLBOX_WORK_CONTAINER}"
+alias rhbox="toolbox enter ${TOOLBOX_WORK_CONTAINER}"
+
+TOOLBOX_PERSONAL_CONTAINER="${TOOLBOX_PERSONAL_CONTAINER:-personal-f44}"
+
+alias tbox="toolbox enter ${TOOLBOX_PERSONAL_CONTAINER}"

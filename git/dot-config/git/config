@@ -1,0 +1,71 @@
+[user]
+	name = User Name
+	email = me@example.com
+
+[alias]
+	# Add a worktree with smart branch handling
+	# Usage: git worktree-add <name> [<path>]
+	# - If name matches upstream branch: create local tracking branch
+	# - If local branch exists: checkout that branch
+	# - Otherwise: create new local branch
+	worktree-add = "!f() { \
+		if [ -z \"$1\" ]; then \
+			echo \"Usage: git worktree-add <name> [<path>] [<start-point>]\"; \
+			return 1; \
+		fi; \
+		BRANCH_NAME=\"$1\"; \
+		if [ -n \"$2\" ]; then \
+			WORKTREE_PATH=\"$2\"; \
+		else \
+			WORKTREE_PATH=\"$BRANCH_NAME\"; \
+		fi; \
+		START_POINT=\"$3\"; \
+		if git show-ref --verify --quiet \"refs/heads/$BRANCH_NAME\"; then \
+			echo \"Local branch '$BRANCH_NAME' exists, checking out...\"; \
+			git worktree add \"$WORKTREE_PATH\" \"$BRANCH_NAME\"; \
+		elif git show-ref --verify --quiet \"refs/remotes/origin/$BRANCH_NAME\"; then \
+			echo \"Remote branch 'origin/$BRANCH_NAME' exists, creating tracking branch...\"; \
+			git worktree add -b \"$BRANCH_NAME\" \"$WORKTREE_PATH\" \"origin/$BRANCH_NAME\"; \
+		else \
+			if [ -z \"$START_POINT\" ]; then \
+				START_POINT=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/@@' || echo \"origin/main\"); \
+			fi; \
+			echo \"Creating new branch '$BRANCH_NAME' from '$START_POINT'...\"; \
+			git worktree add --no-track -b \"$BRANCH_NAME\" \"$WORKTREE_PATH\" \"$START_POINT\"; \
+		fi; \
+	}; f"
+
+	# Clone a repo into <repo-name>/<repo-name>.git structure
+	# Usage: git clone-bare <remote-url> [<repo-name>]
+	clone-bare = "!f() { \
+		if [ -z \"$1\" ]; then \
+			echo \"Usage: git clone-bare <remote-url> [<repo-name>]\"; \
+			return 1; \
+		fi; \
+		REPO_URL=\"$1\"; \
+		if [ -n \"$2\" ]; then \
+			REPO_NAME=\"$2\"; \
+		else \
+			REPO_NAME=$(basename \"$REPO_URL\" .git); \
+		fi; \
+		echo \"Cloning $REPO_URL into $REPO_NAME/$REPO_NAME.git...\"; \
+		git init --bare \"$REPO_NAME/$REPO_NAME.git\"; \
+		echo \"gitdir: $REPO_NAME.git\" > \"$REPO_NAME/.git\"; \
+		git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" remote add origin \"$REPO_URL\"; \
+		git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'; \
+		git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" fetch origin; \
+		git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" remote set-head origin --auto; \
+		DEFAULT_BRANCH=$(git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'); \
+		if [ -z \"$DEFAULT_BRANCH\" ]; then \
+			DEFAULT_BRANCH=$(git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" branch -r | grep -o 'origin/[^/]*' | head -1 | sed 's@origin/@@'); \
+		fi; \
+		if [ -n \"$DEFAULT_BRANCH\" ]; then \
+			git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" symbolic-ref HEAD \"refs/heads/$DEFAULT_BRANCH\"; \
+			WORKTREE_PATH=$(pwd)\"/$REPO_NAME/$DEFAULT_BRANCH\"; \
+			git --git-dir=\"$REPO_NAME/$REPO_NAME.git\" worktree add -b \"$DEFAULT_BRANCH\" \"$WORKTREE_PATH\" \"origin/$DEFAULT_BRANCH\"; \
+			echo \"Default branch '$DEFAULT_BRANCH' checked out to $REPO_NAME/$DEFAULT_BRANCH\"; \
+		else \
+			echo \"Warning: Could not determine default branch\"; \
+		fi; \
+		echo \"Repository cloned successfully to $REPO_NAME/\"; \
+	}; f"
