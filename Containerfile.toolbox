@@ -1,0 +1,157 @@
+ARG fedora_version=44
+FROM registry.fedoraproject.org/fedora-toolbox:$fedora_version as base
+
+ARG opencode_version=1.2.26
+ARG yamlls_version=1.21.0
+
+RUN dnf install --disablerepo=* --assumeyes \
+        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm \
+ && dnf install --allowerasing --assumeyes \
+        iputils bind-utils \
+        gcc gdb binutils clang clang-tools-extra \
+        golang \
+        rust rust-analyzer \
+        python3 python3-devel python3.9 python3.9-devel python3.12 python3.12-devel \
+        direnv git \
+        opentofu \
+        ty \
+        yamllint \
+        codespell \
+        stow \
+        mesa-va-drivers mesa-vulkan-drivers ffmpeg gstreamer1-plugin-openh264 intel-media-driver libavcodec-freeworld \
+        openssh-clients \
+ && dnf --setopt=install_weak_deps=false install --assumeyes \
+        podman-remote \
+        nvim vim \
+        wl-clipboard \
+        jq yq \
+        poetry uv ruff \
+        nodejs22 nodejs22-npm \
+        libtree-sitter-yaml  libtree-sitter-toml  libtree-sitter-rust  libtree-sitter-c  libtree-sitter-cpp  \
+        libtree-sitter-bash  libtree-sitter-go  libtree-sitter-json  libtree-sitter-lua libtree-sitter-python \
+        tree-sitter-cli \
+ && npm install -g opencode-ai@$opencode_version yaml-language-server@$yamlls_version \
+ && opencode completion bash > /etc/bash_completion.d/opencode \
+ && dnf clean all \
+ && rm -rf /var/cache/dnf \
+ && npm cache clean --force \
+ && curl -LJq https://github.com/opentofu/tofu-ls/releases/download/v0.4.0/tofu-ls_Linux_x86_64.tar.gz \
+    | tar -xzO tofu-ls > /usr/local/bin/tofu-ls \
+ && chmod +x /usr/local/bin/tofu-ls \
+ && curl -LJq curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    > /usr/local/bin/kubectl \
+ && chmod +x /usr/local/bin/kubectl
+
+RUN mkdir /etc/opencode && cat <<EOF > /etc/opencode/opencode.json
+{
+  "\$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "provider": {
+    "litellm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LiteLLM (Proxy)",
+      "options": {
+	"baseURL": "http://localhost:4000/v1"
+      },
+      "models": {
+	"claude-opus-4-6": {
+	  "name": "Claude Opus 4.6"
+	},
+	"claude-sonnet-4-6": {
+	  "name": "Claude Sonnet 4.6"
+	},
+	"claude-haiku-4-6": {
+	  "name": "Claude Haiku 4.6"
+	}
+      }
+    }
+  },
+  "model": "litellm/claude-sonnet-4-6",
+  "small_model": "litellm/claude-haiku-4-5",
+  "lsp": {
+    "gopls": {
+      "command": ["gopls", "serve"],
+      "extensions": [".go"]
+    },
+    "tofu-ls": {
+      "command": ["tofu-ls"],
+      "extensions": [".tofu", ".tofu.json", ".tf", ".tf.json", ".tfvars", ".tfvars.json", ".terraform.lock.hcl"]
+    },
+    "ty": {
+      "command": ["ty", "server"],
+      "extensions": [".py", ".pyi"]
+    },
+    "yaml-ls": {
+      "command": ["yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    }
+  },
+  "plugin": []
+}
+EOF \
+ && cat <<EOF > /etc/opencode/tui.json
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "theme": "system"
+}
+EOF
+
+ENV OPENCODE_DISABLE_LSP_DOWNLOAD="true" \
+    OPENCODE_EXPERIMENTAL_LSP_TOOL="true" \
+    OPENCODE_CONFIG_DIR="/etc/opencode" \
+    OPENCODE_CONFIG="/etc/opencode/opencode.json" \
+    GOOGLE_CLOUD_PROJECT="dummy" \
+    VERTEX_LOCATION="dummy"
+
+#
+# build openshift `oc` binary
+#
+FROM docker.io/library/golang:1.26-alpine3.23 as oc_builder
+
+ARG openshift_oc_tag=openshift-clients-4.21.0-202601121715
+
+RUN apk add --no-cache make
+
+RUN wget -O - https://github.com/openshift/oc/archive/refs/tags/${openshift_oc_tag}.tar.gz | tar -xz \
+ && cd oc-$openshift_oc_tag \
+ && make cross-build-linux-amd64 \
+ && mkdir /out && cp _output/bin/linux_amd64/oc /out/
+
+#
+# Build the work version of toolbox
+#
+FROM base as work
+
+ARG poetry_version=1.8.5
+
+COPY --from=oc_builder /out/oc /usr/local/bin/oc
+RUN chmod +x /usr/local/bin/oc
+
+RUN dnf copr enable --assumeyes @teemtee/stable \
+ && dnf copr enable --assumeyes @testing-farm/stable \
+ && dnf copr enable --assumeyes copr.devel.redhat.com/@endpoint-systems-sysadmins/unsupported-fedora-packages \
+ && dnf install --assumeyes \
+        postgresql-private-devel postgresql-server-devel \
+        redhat-internal-cert-install \
+        krb5-workstation \
+        openbao openbao-vault-compat \
+        awscli2 python3-openstackclient oci-cli \
+        ansible \
+        tmt \
+        testing-farm \
+ && python -m pip install --root-user-action ignore poetry==$poetry_version \
+ && dnf clean all \
+ && rm -rf /var/cache/dnf
+
+#
+# personal toolbox
+#
+FROM base as personal
+
+RUN dnf install --assumeyes \
+        pass pass-otp \
+        mpv \
+        oci-cli \
+ && dnf clean all \
+ && rm -rf /var/cache/dnf
