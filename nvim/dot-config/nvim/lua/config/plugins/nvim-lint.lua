@@ -15,6 +15,6 @@ end
 --
 lint.linters_by_ft = {
     bash   = { "bash" },
-    python = { "ruff" },
+    -- python = { "ruff" },
     yaml   = { "yamllint" },
 }

@@ -1,5 +1,4 @@
 -- Pick up and use system parsers
--- Requires nvim-treesitter
 
 vim.cmd.runtime({ 'plugin/query_predicates.lua', bang = true })
 vim.cmd.runtime({ 'plugin/filetypes.lua', bang = true })
