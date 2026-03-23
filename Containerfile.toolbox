@@ -6,6 +6,7 @@ ARG yamlls_version=1.21.0
 ARG ansiblels_version=1.2.3
 ARG harper_version=1.12.0
 ARG helm_ls_version=0.5.4
+ARG packer_version=1.15.0
 
 RUN dnf install --disablerepo=* --assumeyes \
         https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
@@ -16,6 +17,7 @@ RUN dnf install --disablerepo=* --assumeyes \
         golang \
         rust rust-analyzer \
         python3 python3-devel python3.9 python3.9-devel python3.12 python3.12-devel \
+        python3-glanceclient \
         direnv git \
         opentofu kubernetes-client helm \
         ty \
@@ -38,6 +40,7 @@ RUN dnf install --disablerepo=* --assumeyes \
         nodejs-bash-language-server ShellCheck \
         pinentry \
         ansible ansible-lint \
+        just \
  && npm install -g opencode-ai@$opencode_version yaml-language-server@$yamlls_version @ansible/ansible-language-server@$ansiblels_version \
  && opencode completion bash > /etc/bash_completion.d/opencode \
  && dnf clean all \
@@ -50,10 +53,13 @@ RUN dnf install --disablerepo=* --assumeyes \
     | tar -xzO harper-cli > /usr/local/bin/harper-cli \
  && chmod +x /usr/local/bin/harper-cli \
  && curl -LJq https://github.com/Automattic/harper/releases/download/v${harper_version}/harper-ls-x86_64-unknown-linux-gnu.tar.gz \
-    | tar -xzP harper-ls > /usr/local/bin/harper-ls \
+    | tar -xzO harper-ls > /usr/local/bin/harper-ls \
  && chmod +x /usr/local/bin/harper-ls \
  && curl -LJo /usr/local/bin/helm_ls https://github.com/mrjosh/helm-ls/releases/download/v${helm_ls_version}/helm_ls_linux_amd64 \
- && chmod +x /usr/local/bin/helm_ls
+ && chmod +x /usr/local/bin/helm_ls \
+ && curl -LJo /tmp/packer.zip https://releases.hashicorp.com/packer/${packer_version}/packer_${packer_version}_linux_amd64.zip \
+ && unzip -p /tmp/packer.zip packer > /usr/local/bin/packer \
+ && chmod +x /usr/local/bin/packer
 
 #  && curl -LJq "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
 #     > /usr/local/bin/kubectl \
@@ -145,6 +151,11 @@ RUN wget -O - https://github.com/openshift/oc/archive/refs/tags/${openshift_oc_t
 FROM base as work
 
 ARG poetry_version=1.8.5
+ARG logcli_version=3.5.12
+ARG artemis_version=0.0.87
+ARG empusa_git_ref=00a5010de7fc839b55d9eea4f6a0aa4e7fe9853e
+ARG ibmcloud_version=2.41.1
+ARG pvsadm_version=0.1.24
 
 COPY --from=oc_builder /out/oc /usr/local/bin/oc
 RUN chmod +x /usr/local/bin/oc
@@ -157,12 +168,26 @@ RUN dnf copr enable --assumeyes @teemtee/stable \
         redhat-internal-cert-install \
         krb5-workstation \
         openbao openbao-vault-compat \
-        awscli2 python3-openstackclient oci-cli \
+        awscli2 python3-openstackclient oci-cli beaker-client \
         tmt \
         testing-farm \
- && python -m pip install --root-user-action ignore poetry==$poetry_version \
+ && python -m pip install --no-cache-dir --root-user-action ignore poetry==$poetry_version \
+ && python3.9 -m ensurepip \
+ && python3.9 -m pip install --no-cache-dir --root-user-action ignore \
+        git+https://gitlab.com/testing-farm/artemis.git@v${artemis_version}#subdirectory=cli/ \
+        git+https://gitlab.com/testing-farm/empusa.git@${empusa_git_ref} \
  && dnf clean all \
- && rm -rf /var/cache/dnf
+ && rm -rf /var/cache/dnf \
+ && rm /tmp/packer.zip \
+ && curl -LJo /tmp/logcli.zip https://github.com/grafana/loki/releases/download/v${logcli_version}/logcli-linux-amd64.zip \
+ && unzip -p /tmp/logcli.zip logcli-linux-amd64 > /usr/local/bin/logcli \
+ && chmod +x /usr/local/bin/logcli \
+ && rm /tmp/logcli.zip \
+ && curl -LJ https://download.clis.cloud.ibm.com/ibm-cloud-cli-dn/${ibmcloud_version}/binaries/IBM_Cloud_CLI_${ibmcloud_version}_linux_amd64.tgz \
+    | tar --strip-components=1 -xzO IBM_Cloud_CLI/ibmcloud > /usr/local/bin/ibmcloud \
+ && chmod +x /usr/local/bin/ibmcloud \
+ && curl -LJo /usr/local/bin/pvsadm https://github.com/ppc64le-cloud/pvsadm/releases/download/v${pvsadm_version}/pvsadm-linux-amd64 \
+ && chmod +x /usr/local/bin/pvsadm
 
 #
 # personal toolbox
